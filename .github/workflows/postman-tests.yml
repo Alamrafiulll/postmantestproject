@@ -1,0 +1,57 @@
+# Postman Tests CI
+#
+# This workflow runs the Student Management API Postman collection
+# using the Postman CLI. It's triggered on pushes to main and on PRs.
+#
+# Requirements:
+#   - A Postman API key stored as a GitHub secret: POSTMAN_API_KEY
+#   - The collection must be synced to your Postman workspace
+#   - Replace <YOUR_COLLECTION_ID> with your actual Postman collection ID
+#
+# How to find your collection ID:
+#   1. Open Postman
+#   2. Right-click your collection → "Share" → "Via API"
+#   3. Copy the collection UID
+#
+# Note: This workflow will fail until you configure the secrets
+# and replace the placeholder IDs below.
+
+name: Postman Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Allow running manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Postman CLI
+        run: |
+          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+
+      - name: Login to Postman CLI
+        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+
+      - name: Run Postman collection
+        run: |
+          postman collection run <YOUR_COLLECTION_ID> \
+            --environment <YOUR_ENVIRONMENT_ID>
+        # Replace <YOUR_COLLECTION_ID> and <YOUR_ENVIRONMENT_ID>
+        # with your actual Postman IDs.
+        #
+        # You can also run from the exported file instead:
+        #   postman collection run postman/Student-Management-API-QA.postman_collection.json

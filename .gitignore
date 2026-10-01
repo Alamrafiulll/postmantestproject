@@ -1,0 +1,33 @@
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment and secrets
+.env
+*.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Node (if using Newman or Postman CLI locally)
+node_modules/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Postman - do NOT ignore the collection or example environment
+# Only ignore actual environment files with real values
+postman/environments/qa.environment.json

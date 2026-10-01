@@ -1,0 +1,3206 @@
+{
+  "info": {
+    "_postman_id": "f4a5b6c7-d8e9-4a0b-1c2d-3e4f5a6b7c8d",
+    "name": "Student Management API - QA Automation",
+    "description": "API testing collection for a fictional Student Management System. This collection tests authentication, CRUD operations for students, courses, and enrollments, plus negative and boundary test cases. Designed to run against a Postman Mock Server.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level pre-request script",
+          "// Runs before every request in the collection"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level test script",
+          "// Runs after every request in the collection",
+          "",
+          "// Check that every response has Content-Type header",
+          "pm.test('Response has Content-Type header', function () {",
+          "    pm.response.to.have.header('Content-Type');",
+          "});",
+          "",
+          "// Check response time is reasonable",
+          "pm.test('Response time is under 5 seconds', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Authentication",
+      "item": [
+        {
+          "name": "Login - Valid Credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response contains token', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "    pm.expect(jsonData.token).to.be.a('string');",
+                  "    pm.expect(jsonData.token).to.not.be.empty;",
+                  "});",
+                  "",
+                  "pm.test('Response contains expiresIn', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('expiresIn');",
+                  "    pm.expect(jsonData.expiresIn).to.be.a('number');",
+                  "});",
+                  "",
+                  "// Save token to environment for later requests",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.environment.set('authToken', jsonData.token);",
+                  "    console.log('Auth token saved to environment');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with valid credentials. Saves the returned token to the authToken environment variable."
+          },
+          "response": [
+            {
+              "name": "Login - Valid Credentials",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"token\": \"mock-jwt-token-abc123xyz789\",\n  \"expiresIn\": 3600,\n  \"tokenType\": \"Bearer\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login - Invalid Credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error message', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "    pm.expect(jsonData.error).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.test('No token is returned', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.not.have.property('token');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Login - Invalid Credentials"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Attempt login with wrong password. Should return 401."
+          },
+          "response": [
+            {
+              "name": "Login - Invalid Credentials",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"wrongpassword\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid username or password\",\n  \"statusCode\": 401\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login - Missing Username",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error message', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('Error mentions username', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('username');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Login - Missing Username"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login request without username field. Should return 400."
+          },
+          "response": [
+            {
+              "name": "Login - Missing Username",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Username is required\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login - Missing Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error message', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('Error mentions password', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('password');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Login - Missing Password"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login request without password field. Should return 400."
+          },
+          "response": [
+            {
+              "name": "Login - Missing Password",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"admin\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Password is required\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login - Empty Request Body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Login - Empty Request Body"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with empty JSON body. Should return 400."
+          },
+          "response": [
+            {
+              "name": "Login - Empty Request Body",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Username and password are required\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Tests for the authentication endpoint. Run this folder first to set the authToken variable."
+    },
+    {
+      "name": "02 - Students",
+      "item": [
+        {
+          "name": "Get All Students",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is a JSON array', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Array is not empty', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.length).to.be.above(0);",
+                  "});",
+                  "",
+                  "pm.test('Each student has required fields', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    jsonData.forEach(function (student) {",
+                  "        pm.expect(student).to.have.property('id');",
+                  "        pm.expect(student).to.have.property('name');",
+                  "        pm.expect(student).to.have.property('email');",
+                  "        pm.expect(student).to.have.property('age');",
+                  "        pm.expect(student).to.have.property('major');",
+                  "        pm.expect(student).to.have.property('status');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Student field types are correct', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var student = jsonData[0];",
+                  "    pm.expect(student.id).to.be.a('number');",
+                  "    pm.expect(student.name).to.be.a('string');",
+                  "    pm.expect(student.email).to.be.a('string');",
+                  "    pm.expect(student.age).to.be.a('number');",
+                  "    pm.expect(student.major).to.be.a('string');",
+                  "    pm.expect(student.status).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Retrieve all students."
+          },
+          "response": [
+            {
+              "name": "Get All Students",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"name\": \"Maria Santos\",\n    \"email\": \"maria.santos@example.com\",\n    \"age\": 21,\n    \"major\": \"Computer Science\",\n    \"status\": \"active\"\n  },\n  {\n    \"id\": 2,\n    \"name\": \"James Chen\",\n    \"email\": \"james.chen@example.com\",\n    \"age\": 19,\n    \"major\": \"Mathematics\",\n    \"status\": \"active\"\n  },\n  {\n    \"id\": 3,\n    \"name\": \"Aisha Patel\",\n    \"email\": \"aisha.patel@example.com\",\n    \"age\": 22,\n    \"major\": \"Biology\",\n    \"status\": \"inactive\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Student By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has correct student fields', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData).to.have.property('age');",
+                  "    pm.expect(jsonData).to.have.property('major');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "});",
+                  "",
+                  "pm.test('Student ID is a number', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.test('Email contains @ symbol', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.email).to.include('@');",
+                  "});",
+                  "",
+                  "pm.test('Status is a valid value', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(['active', 'inactive']).to.include(jsonData.status);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/{{studentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", "{{studentId}}"]
+            },
+            "description": "Get a specific student by ID."
+          },
+          "response": [
+            {
+              "name": "Get Student By ID",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/students/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"name\": \"Maria Santos\",\n  \"email\": \"maria.santos@example.com\",\n  \"age\": 21,\n  \"major\": \"Computer Science\",\n  \"status\": \"active\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response contains created student', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData).to.have.property('age');",
+                  "    pm.expect(jsonData).to.have.property('major');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "});",
+                  "",
+                  "pm.test('Student has an assigned ID', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.be.a('number');",
+                  "    pm.expect(jsonData.id).to.be.above(0);",
+                  "});",
+                  "",
+                  "pm.test('Student status defaults to active', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('active');",
+                  "});",
+                  "",
+                  "pm.test('Returned name matches request', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.name).to.eql('Test Student');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Student\",\n  \"email\": \"test.student@example.com\",\n  \"age\": 20,\n  \"major\": \"Physics\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Create a new student with valid data."
+          },
+          "response": [
+            {
+              "name": "Create Student",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test Student\",\n  \"email\": \"test.student@example.com\",\n  \"age\": 20,\n  \"major\": \"Physics\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 4,\n  \"name\": \"Test Student\",\n  \"email\": \"test.student@example.com\",\n  \"age\": 20,\n  \"major\": \"Physics\",\n  \"status\": \"active\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response reflects updated values', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.name).to.eql('Maria Santos Updated');",
+                  "    pm.expect(jsonData.email).to.eql('maria.updated@example.com');",
+                  "    pm.expect(jsonData.age).to.eql(22);",
+                  "    pm.expect(jsonData.major).to.eql('Data Science');",
+                  "});",
+                  "",
+                  "pm.test('Student ID is preserved', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Maria Santos Updated\",\n  \"email\": \"maria.updated@example.com\",\n  \"age\": 22,\n  \"major\": \"Data Science\",\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students/{{studentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", "{{studentId}}"]
+            },
+            "description": "Full update of student data."
+          },
+          "response": [
+            {
+              "name": "Update Student",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Maria Santos Updated\",\n  \"email\": \"maria.updated@example.com\",\n  \"age\": 22,\n  \"major\": \"Data Science\",\n  \"status\": \"active\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"name\": \"Maria Santos Updated\",\n  \"email\": \"maria.updated@example.com\",\n  \"age\": 22,\n  \"major\": \"Data Science\",\n  \"status\": \"active\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Partial Update Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Major field is updated', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.major).to.eql('Software Engineering');",
+                  "});",
+                  "",
+                  "pm.test('Other fields are still present', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData).to.have.property('age');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"major\": \"Software Engineering\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students/{{studentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", "{{studentId}}"]
+            },
+            "description": "Partial update - only change one field."
+          },
+          "response": [
+            {
+              "name": "Partial Update Student",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"major\": \"Software Engineering\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"name\": \"Maria Santos\",\n  \"email\": \"maria.santos@example.com\",\n  \"age\": 21,\n  \"major\": \"Software Engineering\",\n  \"status\": \"active\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains confirmation message', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/{{studentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", "{{studentId}}"]
+            },
+            "description": "Delete a student by ID."
+          },
+          "response": [
+            {
+              "name": "Delete Student",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/students/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Student with ID 1 has been deleted\",\n  \"id\": 1\n}"
+            }
+          ]
+        }
+      ],
+      "description": "CRUD operations for students. Includes get all, get by ID, create, update (PUT), partial update (PATCH), and delete."
+    },
+    {
+      "name": "03 - Courses",
+      "item": [
+        {
+          "name": "Get All Courses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is a JSON array', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Each course has required fields', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    jsonData.forEach(function (course) {",
+                  "        pm.expect(course).to.have.property('id');",
+                  "        pm.expect(course).to.have.property('courseCode');",
+                  "        pm.expect(course).to.have.property('courseName');",
+                  "        pm.expect(course).to.have.property('credits');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Course field types are correct', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var course = jsonData[0];",
+                  "    pm.expect(course.id).to.be.a('number');",
+                  "    pm.expect(course.courseCode).to.be.a('string');",
+                  "    pm.expect(course.courseName).to.be.a('string');",
+                  "    pm.expect(course.credits).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses"]
+            },
+            "description": "Get all courses."
+          },
+          "response": [
+            {
+              "name": "Get All Courses",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/courses",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["courses"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"courseCode\": \"CS101\",\n    \"courseName\": \"Introduction to Computer Science\",\n    \"credits\": 3\n  },\n  {\n    \"id\": 2,\n    \"courseCode\": \"MATH201\",\n    \"courseName\": \"Linear Algebra\",\n    \"credits\": 4\n  },\n  {\n    \"id\": 3,\n    \"courseCode\": \"BIO110\",\n    \"courseName\": \"General Biology\",\n    \"credits\": 3\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Course By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has course fields', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('courseCode');",
+                  "    pm.expect(jsonData).to.have.property('courseName');",
+                  "    pm.expect(jsonData).to.have.property('credits');",
+                  "});",
+                  "",
+                  "pm.test('Credits is a positive number', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.credits).to.be.a('number');",
+                  "    pm.expect(jsonData.credits).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses/{{courseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses", "{{courseId}}"]
+            },
+            "description": "Get a specific course by ID."
+          },
+          "response": [
+            {
+              "name": "Get Course By ID",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/courses/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["courses", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"courseCode\": \"CS101\",\n  \"courseName\": \"Introduction to Computer Science\",\n  \"credits\": 3\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response contains created course', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('courseCode');",
+                  "    pm.expect(jsonData).to.have.property('courseName');",
+                  "    pm.expect(jsonData).to.have.property('credits');",
+                  "});",
+                  "",
+                  "pm.test('Course has an assigned ID', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.be.a('number');",
+                  "    pm.expect(jsonData.id).to.be.above(0);",
+                  "});",
+                  "",
+                  "pm.test('Course name matches request', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.courseName).to.eql('Introductory Physics');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseCode\": \"PHYS101\",\n  \"courseName\": \"Introductory Physics\",\n  \"credits\": 4\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/courses",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses"]
+            },
+            "description": "Create a new course."
+          },
+          "response": [
+            {
+              "name": "Create Course",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"courseCode\": \"PHYS101\",\n  \"courseName\": \"Introductory Physics\",\n  \"credits\": 4\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/courses",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["courses"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 4,\n  \"courseCode\": \"PHYS101\",\n  \"courseName\": \"Introductory Physics\",\n  \"credits\": 4\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response reflects updated values', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.courseName).to.eql('Intro to CS - Updated');",
+                  "    pm.expect(jsonData.credits).to.eql(4);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseCode\": \"CS101\",\n  \"courseName\": \"Intro to CS - Updated\",\n  \"credits\": 4\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/courses/{{courseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses", "{{courseId}}"]
+            },
+            "description": "Full update of course data."
+          },
+          "response": [
+            {
+              "name": "Update Course",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"courseCode\": \"CS101\",\n  \"courseName\": \"Intro to CS - Updated\",\n  \"credits\": 4\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/courses/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["courses", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"courseCode\": \"CS101\",\n  \"courseName\": \"Intro to CS - Updated\",\n  \"credits\": 4\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains confirmation', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses/{{courseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses", "{{courseId}}"]
+            },
+            "description": "Delete a course by ID."
+          },
+          "response": [
+            {
+              "name": "Delete Course",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/courses/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["courses", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Course with ID 1 has been deleted\",\n  \"id\": 1\n}"
+            }
+          ]
+        }
+      ],
+      "description": "CRUD operations for courses."
+    },
+    {
+      "name": "04 - Enrollments",
+      "item": [
+        {
+          "name": "Get All Enrollments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is a JSON array', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Each enrollment has required fields', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    jsonData.forEach(function (enrollment) {",
+                  "        pm.expect(enrollment).to.have.property('id');",
+                  "        pm.expect(enrollment).to.have.property('studentId');",
+                  "        pm.expect(enrollment).to.have.property('courseId');",
+                  "        pm.expect(enrollment).to.have.property('enrollmentDate');",
+                  "        pm.expect(enrollment).to.have.property('status');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Enrollment field types are correct', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var enrollment = jsonData[0];",
+                  "    pm.expect(enrollment.id).to.be.a('number');",
+                  "    pm.expect(enrollment.studentId).to.be.a('number');",
+                  "    pm.expect(enrollment.courseId).to.be.a('number');",
+                  "    pm.expect(enrollment.enrollmentDate).to.be.a('string');",
+                  "    pm.expect(enrollment.status).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["enrollments"]
+            },
+            "description": "Get all enrollments."
+          },
+          "response": [
+            {
+              "name": "Get All Enrollments",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/enrollments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["enrollments"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"studentId\": 1,\n    \"courseId\": 1,\n    \"enrollmentDate\": \"2024-09-01\",\n    \"status\": \"enrolled\"\n  },\n  {\n    \"id\": 2,\n    \"studentId\": 2,\n    \"courseId\": 2,\n    \"enrollmentDate\": \"2024-09-01\",\n    \"status\": \"enrolled\"\n  },\n  {\n    \"id\": 3,\n    \"studentId\": 3,\n    \"courseId\": 3,\n    \"enrollmentDate\": \"2024-09-15\",\n    \"status\": \"dropped\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Enrollment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response contains enrollment data', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('studentId');",
+                  "    pm.expect(jsonData).to.have.property('courseId');",
+                  "    pm.expect(jsonData).to.have.property('enrollmentDate');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "});",
+                  "",
+                  "pm.test('Enrollment status is enrolled', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('enrolled');",
+                  "});",
+                  "",
+                  "pm.test('Enrollment date is present', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.enrollmentDate).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": 1,\n  \"courseId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["enrollments"]
+            },
+            "description": "Enroll a student in a course."
+          },
+          "response": [
+            {
+              "name": "Create Enrollment",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"studentId\": 1,\n  \"courseId\": 2\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/enrollments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["enrollments"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 4,\n  \"studentId\": 1,\n  \"courseId\": 2,\n  \"enrollmentDate\": \"2024-10-15\",\n  \"status\": \"enrolled\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Enrollment By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has enrollment fields', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('studentId');",
+                  "    pm.expect(jsonData).to.have.property('courseId');",
+                  "    pm.expect(jsonData).to.have.property('enrollmentDate');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "});",
+                  "",
+                  "pm.test('Status is a valid enrollment status', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(['enrolled', 'dropped', 'completed']).to.include(jsonData.status);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/enrollments/{{enrollmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["enrollments", "{{enrollmentId}}"]
+            },
+            "description": "Get a specific enrollment by ID."
+          },
+          "response": [
+            {
+              "name": "Get Enrollment By ID",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/enrollments/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["enrollments", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"studentId\": 1,\n  \"courseId\": 1,\n  \"enrollmentDate\": \"2024-09-01\",\n  \"status\": \"enrolled\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Enrollment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains confirmation', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/enrollments/{{enrollmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["enrollments", "{{enrollmentId}}"]
+            },
+            "description": "Delete an enrollment."
+          },
+          "response": [
+            {
+              "name": "Delete Enrollment",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/enrollments/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["enrollments", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Enrollment with ID 1 has been deleted\",\n  \"id\": 1\n}"
+            }
+          ]
+        }
+      ],
+      "description": "CRUD operations for enrollments."
+    },
+    {
+      "name": "05 - Negative Tests",
+      "item": [
+        {
+          "name": "Get Nonexistent Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error message', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('Error mentions not found', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('not found');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", "999"]
+            },
+            "description": "Request a student ID that doesn't exist."
+          },
+          "response": [
+            {
+              "name": "Get Nonexistent Student",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/students/999",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students", "999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Student not found\",\n  \"statusCode\": 404\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Student - Missing Required Field",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('Error mentions required field', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('name');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Create Student - Missing Required Field"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"noname@example.com\",\n  \"age\": 20,\n  \"major\": \"Physics\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Try to create a student without the name field."
+          },
+          "response": [
+            {
+              "name": "Create Student - Missing Required Field",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"noname@example.com\",\n  \"age\": 20,\n  \"major\": \"Physics\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Name is required\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Student - Invalid Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error mentions email', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('email');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Create Student - Invalid Email"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bad Email Student\",\n  \"email\": \"not-an-email\",\n  \"age\": 20,\n  \"major\": \"Physics\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Try to create a student with an invalid email format."
+          },
+          "response": [
+            {
+              "name": "Create Student - Invalid Email",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Bad Email Student\",\n  \"email\": \"not-an-email\",\n  \"age\": 20,\n  \"major\": \"Physics\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid email format\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Student - Invalid Age",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error mentions age', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('age');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Create Student - Invalid Age"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Young Student\",\n  \"email\": \"young@example.com\",\n  \"age\": 10,\n  \"major\": \"Physics\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Try to create a student with an age outside the valid range."
+          },
+          "response": [
+            {
+              "name": "Create Student - Invalid Age",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Young Student\",\n  \"email\": \"young@example.com\",\n  \"age\": 10,\n  \"major\": \"Physics\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Age must be between 16 and 65\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Student - Duplicate Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('Error mentions duplicate', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('already exists');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Create Student - Duplicate Email"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Duplicate Student\",\n  \"email\": \"maria.santos@example.com\",\n  \"age\": 20,\n  \"major\": \"Physics\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Try to create a student with an email that already exists."
+          },
+          "response": [
+            {
+              "name": "Create Student - Duplicate Email",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Duplicate Student\",\n  \"email\": \"maria.santos@example.com\",\n  \"age\": 20,\n  \"major\": \"Physics\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"A student with this email already exists\",\n  \"statusCode\": 409\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Nonexistent Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Error mentions not found', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('not found');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses", "999"]
+            },
+            "description": "Request a course ID that doesn't exist."
+          },
+          "response": [
+            {
+              "name": "Get Nonexistent Course",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/courses/999",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["courses", "999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Course not found\",\n  \"statusCode\": 404\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Course - Missing Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error mentions course name', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('name');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Create Course - Missing Name"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseCode\": \"NONE01\",\n  \"credits\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/courses",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses"]
+            },
+            "description": "Try to create a course without the courseName field."
+          },
+          "response": [
+            {
+              "name": "Create Course - Missing Name",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"courseCode\": \"NONE01\",\n  \"credits\": 3\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/courses",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["courses"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Course name is required\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        },
+        {
+          "name": "Duplicate Enrollment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('Error mentions duplicate enrollment', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('already enrolled');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Duplicate Enrollment"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": 1,\n  \"courseId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["enrollments"]
+            },
+            "description": "Try to enroll a student in a course they're already enrolled in."
+          },
+          "response": [
+            {
+              "name": "Duplicate Enrollment",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"studentId\": 1,\n  \"courseId\": 1\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/enrollments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["enrollments"]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Student is already enrolled in this course\",\n  \"statusCode\": 409\n}"
+            }
+          ]
+        },
+        {
+          "name": "Invalid Student ID in Enrollment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error mentions student', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('student');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Invalid Student ID in Enrollment"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": 9999,\n  \"courseId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["enrollments"]
+            },
+            "description": "Try to enroll a student that doesn't exist."
+          },
+          "response": [
+            {
+              "name": "Invalid Student ID in Enrollment",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"studentId\": 9999,\n  \"courseId\": 1\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/enrollments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["enrollments"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Student with ID 9999 does not exist\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        },
+        {
+          "name": "Invalid Course ID in Enrollment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error mentions course', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('course');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Invalid Course ID in Enrollment"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": 1,\n  \"courseId\": 9999\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["enrollments"]
+            },
+            "description": "Try to enroll in a course that doesn't exist."
+          },
+          "response": [
+            {
+              "name": "Invalid Course ID in Enrollment",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"studentId\": 1,\n  \"courseId\": 9999\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/enrollments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["enrollments"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Course with ID 9999 does not exist\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Tests for invalid inputs, missing fields, nonexistent resources, and conflict scenarios."
+    },
+    {
+      "name": "06 - Validation Tests",
+      "item": [
+        {
+          "name": "Student Age - Minimum Boundary (16)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Student with age 16 is accepted', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.age).to.eql(16);",
+                  "});",
+                  "",
+                  "pm.test('Student is created with all fields', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Student Age - Minimum Boundary (16)"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Min Age Student\",\n  \"email\": \"minage@example.com\",\n  \"age\": 16,\n  \"major\": \"Art\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Boundary test: age at minimum valid value (16). Assumed business rule: students must be at least 16."
+          },
+          "response": [
+            {
+              "name": "Student Age - Minimum Boundary (16)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Min Age Student\",\n  \"email\": \"minage@example.com\",\n  \"age\": 16,\n  \"major\": \"Art\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 5,\n  \"name\": \"Min Age Student\",\n  \"email\": \"minage@example.com\",\n  \"age\": 16,\n  \"major\": \"Art\",\n  \"status\": \"active\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Student Age - Maximum Boundary (65)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Student with age 65 is accepted', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.age).to.eql(65);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Student Age - Maximum Boundary (65)"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Max Age Student\",\n  \"email\": \"maxage@example.com\",\n  \"age\": 65,\n  \"major\": \"History\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Boundary test: age at maximum valid value (65)."
+          },
+          "response": [
+            {
+              "name": "Student Age - Maximum Boundary (65)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Max Age Student\",\n  \"email\": \"maxage@example.com\",\n  \"age\": 65,\n  \"major\": \"History\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 6,\n  \"name\": \"Max Age Student\",\n  \"email\": \"maxage@example.com\",\n  \"age\": 65,\n  \"major\": \"History\",\n  \"status\": \"active\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Student Age - Below Minimum (15)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error mentions age range', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('age');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Student Age - Below Minimum (15)"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Too Young\",\n  \"email\": \"tooyoung@example.com\",\n  \"age\": 15,\n  \"major\": \"Art\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Boundary test: age one below the minimum (15). Should be rejected."
+          },
+          "response": [
+            {
+              "name": "Student Age - Below Minimum (15)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Too Young\",\n  \"email\": \"tooyoung@example.com\",\n  \"age\": 15,\n  \"major\": \"Art\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Age must be between 16 and 65\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        },
+        {
+          "name": "Student Age - Above Maximum (66)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error mentions age range', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('age');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Student Age - Above Maximum (66)"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Too Old\",\n  \"email\": \"tooold@example.com\",\n  \"age\": 66,\n  \"major\": \"History\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Boundary test: age one above the maximum (66). Should be rejected."
+          },
+          "response": [
+            {
+              "name": "Student Age - Above Maximum (66)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Too Old\",\n  \"email\": \"tooold@example.com\",\n  \"age\": 66,\n  \"major\": \"History\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Age must be between 16 and 65\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        },
+        {
+          "name": "Student Name - Very Long Value",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error mentions name length', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('name');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Student Name - Very Long Value"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\n  \"email\": \"longname@example.com\",\n  \"age\": 20,\n  \"major\": \"Art\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Boundary test: name field with 300+ characters. Should be rejected."
+          },
+          "response": [
+            {
+              "name": "Student Name - Very Long Value",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\n  \"email\": \"longname@example.com\",\n  \"age\": 20,\n  \"major\": \"Art\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Name must not exceed 100 characters\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Student - ID Zero",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/0",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", "0"]
+            },
+            "description": "Boundary test: request student with ID = 0."
+          },
+          "response": [
+            {
+              "name": "Get Student - ID Zero",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/students/0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students", "0"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid student ID\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Student - Negative ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error about invalid ID', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('invalid');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/-1",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", "-1"]
+            },
+            "description": "Boundary test: request student with negative ID."
+          },
+          "response": [
+            {
+              "name": "Get Student - Negative ID",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/students/-1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students", "-1"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid student ID\",\n  \"statusCode\": 400\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Boundary and validation tests. Business rules tested here (age range 16-65, name max length 100) are assumptions documented in the test plan."
+    },
+    {
+      "name": "07 - Regression Smoke Suite",
+      "item": [
+        {
+          "name": "Smoke - Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Smoke: Login returns 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Smoke: Token is returned', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "});",
+                  "",
+                  "// Save token for subsequent smoke tests",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.environment.set('authToken', jsonData.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Smoke test: verify login works."
+          },
+          "response": [
+            {
+              "name": "Smoke - Login",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"token\": \"mock-jwt-token-abc123xyz789\",\n  \"expiresIn\": 3600,\n  \"tokenType\": \"Bearer\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Smoke - Get Students",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Smoke: Get students returns 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Smoke: Response is an array', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Smoke test: verify students endpoint is up."
+          },
+          "response": [
+            {
+              "name": "Smoke - Get Students",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"name\": \"Maria Santos\",\n    \"email\": \"maria.santos@example.com\",\n    \"age\": 21,\n    \"major\": \"Computer Science\",\n    \"status\": \"active\"\n  },\n  {\n    \"id\": 2,\n    \"name\": \"James Chen\",\n    \"email\": \"james.chen@example.com\",\n    \"age\": 19,\n    \"major\": \"Mathematics\",\n    \"status\": \"active\"\n  },\n  {\n    \"id\": 3,\n    \"name\": \"Aisha Patel\",\n    \"email\": \"aisha.patel@example.com\",\n    \"age\": 22,\n    \"major\": \"Biology\",\n    \"status\": \"inactive\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Smoke - Get Courses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Smoke: Get courses returns 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Smoke: Response is an array', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses"]
+            },
+            "description": "Smoke test: verify courses endpoint is up."
+          },
+          "response": [
+            {
+              "name": "Smoke - Get Courses",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/courses",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["courses"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"courseCode\": \"CS101\",\n    \"courseName\": \"Introduction to Computer Science\",\n    \"credits\": 3\n  },\n  {\n    \"id\": 2,\n    \"courseCode\": \"MATH201\",\n    \"courseName\": \"Linear Algebra\",\n    \"credits\": 4\n  },\n  {\n    \"id\": 3,\n    \"courseCode\": \"BIO110\",\n    \"courseName\": \"General Biology\",\n    \"credits\": 3\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Smoke - Get Enrollments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Smoke: Get enrollments returns 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Smoke: Response is an array', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["enrollments"]
+            },
+            "description": "Smoke test: verify enrollments endpoint is up."
+          },
+          "response": [
+            {
+              "name": "Smoke - Get Enrollments",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/enrollments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["enrollments"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"studentId\": 1,\n    \"courseId\": 1,\n    \"enrollmentDate\": \"2024-09-01\",\n    \"status\": \"enrolled\"\n  },\n  {\n    \"id\": 2,\n    \"studentId\": 2,\n    \"courseId\": 2,\n    \"enrollmentDate\": \"2024-09-01\",\n    \"status\": \"enrolled\"\n  },\n  {\n    \"id\": 3,\n    \"studentId\": 3,\n    \"courseId\": 3,\n    \"enrollmentDate\": \"2024-09-15\",\n    \"status\": \"dropped\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Smoke - Create and Verify Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Smoke: Create student returns 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Smoke: Created student has an ID', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.id).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.test('Smoke: Student data matches input', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.name).to.eql('Smoke Test Student');",
+                  "    pm.expect(jsonData.email).to.eql('smoke.test@example.com');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-mock-response-name",
+                "value": "Smoke - Create and Verify Student"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Smoke Test Student\",\n  \"email\": \"smoke.test@example.com\",\n  \"age\": 20,\n  \"major\": \"Testing\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            },
+            "description": "Smoke test: verify student creation still works."
+          },
+          "response": [
+            {
+              "name": "Smoke - Create and Verify Student",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Smoke Test Student\",\n  \"email\": \"smoke.test@example.com\",\n  \"age\": 20,\n  \"major\": \"Testing\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/students",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["students"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 7,\n  \"name\": \"Smoke Test Student\",\n  \"email\": \"smoke.test@example.com\",\n  \"age\": 20,\n  \"major\": \"Testing\",\n  \"status\": \"active\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Quick regression suite hitting the most important endpoints. Run this after changes to check nothing major broke."
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://YOUR-MOCK-SERVER-ID.mock.pstmn.io",
+      "type": "string"
+    }
+  ]
+}
